@@ -36,7 +36,12 @@ const userSchema=new Schema({
     problemSolved:{
         type:[String],
         default:[]
-    }
+    },
+    password:{
+        type:String,
+        required:true,  
+        minlength:8
+    },
 },{
     timestamps:true
 });
