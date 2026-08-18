@@ -13,9 +13,12 @@ const register=async(req,res)=>{
 
         req.body.password=await bcrypt.hash(password,10);
         //
-        const token=jwt.sign({emailId},process.env.JWT_SECRET,{expiresIn: 60*60});
 
         const user=await User.create(req.body);
+
+        const token=jwt.sign({_id: user._id, emailId: user.emailId},process.env.JWT_SECRET,{expiresIn: 60*60});
+        res.cookie('token',token,{maxAge:60*60*1000});
+        res.status(201).send("User registered successfully");
     }
     catch(err){
         res.status(400).send("Error: "+err.message);
