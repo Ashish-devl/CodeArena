@@ -4,30 +4,27 @@ const validator = require('validator');
 
 
 
-const validate = (data)=>{
-    const mandatoryField = {firstname,emailId,password} = data;
-    
-    const IsAllowed= mandatoryField.every((k) => Object.keys(data).includes(k));
+const validate = (data) => {
+    const { firstname, emailId, password } = data;
 
-    if(!IsAllowed){
-        throw new Error("Missing mandatory fields");
+    const mandatoryFields = ['firstname', 'emailId', 'password'];
+    const isAllowed = mandatoryFields.every((field) => Boolean(data[field]));
+
+    if (!isAllowed) {
+        throw new Error("Missing mandatory fields: firstname, emailId, and password are required");
     }
 
-    if(!validator.isEmail(emailId)){
+    if (!validator.isEmail(emailId)) {
         throw new Error("Invalid email format");
     }
 
-    if(!validator.isLength(password,{min:6})){
-        throw new Error("Password must be at least 6 characters long");
+    if (!validator.isStrongPassword(password)) {
+        throw new Error("Weak password! Must contain at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.");
     }
 
-    if(!validator.isStrongPassword(data.password)){
-        throw new Error("Weak password");
-    }
-
-    if(!validator.isLength(data.firstname,{min:3,max:20})){
+    if (!validator.isLength(firstname, { min: 3, max: 20 })) {
         throw new Error("Firstname must be between 3 and 20 characters long");
     }
-}
+};
 
 module.exports=validate;

@@ -10,7 +10,6 @@ const userSchema=new Schema({
     },
     lastname:{
         type:String,
-        required:true,
         minlength:3,
         maxlength:20
     },
@@ -18,13 +17,12 @@ const userSchema=new Schema({
         type:String,
         required:true,
         unique:true,
-        trim=true,
+        trim:true,
         lowercase:true,
         immutable:true
     },
     age:{
         type:Number,
-        required:true,
         min:6,
         max:80
     },
