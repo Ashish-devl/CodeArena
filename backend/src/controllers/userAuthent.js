@@ -47,8 +47,9 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-    res.cookie('token', null, { expires: new Date(Date.now()) });
-    res.status(200).send("Logged out successfully");
+   //first validate the token
+   //then add that token to the redis bucket(blocklist)
+   
 };
 
 const getProfile = async (req, res) => {
