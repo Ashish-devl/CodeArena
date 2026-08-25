@@ -2,6 +2,7 @@ const User=require('../models/user');
 const validate=require('../utils/validator');
 const bcrypt=require('bcrypt');
 const jwt=require('jsonwebtoken');
+const redisClient=require('../Config/redis');
 
 
 const register=async(req,res)=>{
@@ -12,17 +13,41 @@ const register=async(req,res)=>{
         const {firstname,emailId,password}=req.body;
 
         req.body.password=await bcrypt.hash(password,10);
+        req.body.role = 'user'; // Set default role
         //
 
         const user=await User.create(req.body);
 
-        const token=jwt.sign({_id: user._id, emailId: user.emailId},process.env.JWT_SECRET,{expiresIn: 60*60});
+        const token=jwt.sign({_id: user._id, emailId: user.emailId, role: 'user'},process.env.JWT_SECRET,{expiresIn: 60*60});
         res.cookie('token',token,{maxAge:60*60*1000});
         res.status(201).send("User registered successfully");
     } catch (err) {
         res.status(400).send("Error: " + err.message);
     }
 };
+
+
+const adminRegister=async(req,res)=>{
+    try{
+
+        //validate the data
+        validate(req.body);
+        const {firstname,emailId,password}=req.body;
+
+        req.body.password=await bcrypt.hash(password,10);
+        req.body.role = 'admin'; // Set role for admin
+        //
+
+        const user=await User.create(req.body);
+
+        const token=jwt.sign({_id: user._id, emailId: user.emailId, role: 'admin'},process.env.JWT_SECRET,{expiresIn: 60*60});
+        res.cookie('token',token,{maxAge:60*60*1000});
+        res.status(201).send("Admin registered successfully");
+    } catch (err) {
+        res.status(400).send("Error: " + err.message);
+    }
+};
+
 
 const login = async (req, res) => {
     try {
@@ -38,7 +63,7 @@ const login = async (req, res) => {
         if (!isPasswordMatch) {
             return res.status(400).send("Invalid credentials");
         }
-        const token = jwt.sign({ _id: user._id, emailId: user.emailId }, process.env.JWT_SECRET, { expiresIn: 60 * 60 });
+        const token = jwt.sign({ _id: user._id, emailId: user.emailId , role: user.role}, process.env.JWT_SECRET, { expiresIn: 60 * 60 });
         res.cookie('token', token, { maxAge: 60 * 60 * 1000 });
         res.status(200).send("Login successful");
     } catch (err) {
@@ -47,8 +72,27 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-   //first validate the token
-   //then add that token to the redis bucket(blocklist)
+   
+
+    try{
+        const token = req.cookies.token;
+
+    const payload = jwt.decode(token);
+
+
+    //then add that token to the redis bucket(blocklist)
+   
+
+    await redisClient.set(`token:${token}`, 'blocked');
+    await redisClient.expire(`token:${token}`, payload.exp); // Set expiration time for the blocked token
+
+
+    res.cookie("token", null, { expires: new Date(Date.now()) });
+    res.status(200).send("Logout successful");
+    }
+    catch(err){
+        res.status(503).send("Error: " + err.message);
+    }
    
 };
 
@@ -73,6 +117,7 @@ module.exports = {
     register,
     login,
     logout,
-    getProfile
+    getProfile,
+    adminRegister
 };
 
